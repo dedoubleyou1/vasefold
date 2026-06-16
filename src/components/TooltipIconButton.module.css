@@ -1,0 +1,35 @@
+.button {
+  display: inline-grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--surface-strong);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.content {
+  z-index: 20;
+  max-width: 14rem;
+  border-radius: 6px;
+  background: var(--ink);
+  color: white;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  padding: 0.45rem 0.55rem;
+}
+
+.arrow {
+  fill: var(--ink);
+}

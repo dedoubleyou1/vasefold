@@ -1,21 +1,32 @@
 # Flatten Revolved Curve
 
-A tiny browser prototype for turning vase-like revolved profiles into flattened papercraft-style templates.
+A browser-based papercraft template tool for turning vase-like revolved profiles into flattened SVG templates.
 
-The project samples a cubic Bezier side profile, imagines it revolved around a vertical axis, and maps the resulting surface into repeated 2D template sections that can be exported as SVG.
+The app samples a cubic Bezier side profile, imagines it revolved around a vertical axis, and maps the resulting surface into repeated 2D panels that can be exported as a printable SVG.
 
 ## Run
 
-Open `index.html` in a browser.
+```sh
+npm install
+npm run dev
+```
 
-The current profile, section count, and sampling settings are hard-coded in `setup.js`. When the page loads, it draws a canvas preview and adds a "Download SVG" link for the flattened template.
+## Scripts
 
-## Files
+- `npm run dev` starts the Vite development server.
+- `npm run build` type-checks and builds the app.
+- `npm run test` runs geometry/unit tests.
+- `npm run test:e2e` runs Playwright browser checks.
+- `npm run lint` runs ESLint.
 
-- `index.html` loads the canvas and module script.
-- `setup.js` contains the drawing, sampling, and SVG export logic.
-- `helpers.js` contains the Bezier and geometry helpers.
+## Stack
+
+- Vite + React + TypeScript
+- SVG rendering for the editor, previews, and export
+- Zustand for project state
+- CSS Modules with CSS variables
+- Vitest and Playwright for test coverage
 
 ## Status
 
-This is an early prototype. Useful next steps include separate closed paths for each panel, glue tabs, printable scale controls, and UI controls for editing the vase profile.
+This is still an early design tool, but it now has a complete front-end foundation: draggable Bezier profile editing, live vase and template previews, metric or imperial height-based sizing, adjustable revolve angle, separate closed SVG panel paths, printable SVG export, and testable pure geometry modules. Glue tabs are intentionally left for a later pass.
