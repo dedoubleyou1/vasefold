@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { deCasteljau } from "../geometry/bezier";
 import { useProjectStore } from "../state/projectStore";
 import type { Point, ProfileControlPoints } from "../types";
+import { getUnitDefinition } from "../units";
 import styles from "./ProfileEditor.module.css";
 
 type EditablePoint = Exclude<keyof ProfileControlPoints, "p1">;
@@ -10,6 +11,13 @@ const editablePoints: EditablePoint[] = ["p2", "p3", "p4"];
 
 function curvePath(profile: ProfileControlPoints): string {
   return `M ${profile.p1.x} ${profile.p1.y} C ${profile.p2.x} ${profile.p2.y}, ${profile.p3.x} ${profile.p3.y}, ${profile.p4.x} ${profile.p4.y}`;
+}
+
+function getRawProfileHeight(profile: ProfileControlPoints): number {
+  const points = [profile.p1, profile.p2, profile.p3, profile.p4];
+  const minY = Math.min(...points.map((point) => point.y));
+  const maxY = Math.max(...points.map((point) => point.y));
+  return Math.max(1, maxY - minY);
 }
 
 function screenToSvgPoint(svg: SVGSVGElement, clientX: number, clientY: number): Point {
@@ -23,8 +31,21 @@ function screenToSvgPoint(svg: SVGSVGElement, clientX: number, clientY: number):
 export function ProfileEditor() {
   const svgRef = useRef<SVGSVGElement>(null);
   const [activePoint, setActivePoint] = useState<EditablePoint | null>(null);
-  const profile = useProjectStore((state) => state.project.profile);
+  const project = useProjectStore((state) => state.project);
+  const profile = project.profile;
   const setControlPoint = useProjectStore((state) => state.setControlPoint);
+
+  const grid = useMemo(() => {
+    const unitDefinition = getUnitDefinition(project.unitSystem);
+    const physicalStep = project.unitSystem === "metric" ? 10 : 0.5;
+    const spacing = (physicalStep * getRawProfileHeight(profile)) / project.objectDimensions.height;
+
+    return {
+      label: project.unitSystem === "metric" ? "Grid: 1 cm" : "Grid: 1/2 in",
+      spacing,
+      unit: unitDefinition.unit,
+    };
+  }, [profile, project.objectDimensions.height, project.unitSystem]);
 
   const sampledPath = useMemo(() => {
     const commands = [];
@@ -51,7 +72,7 @@ export function ProfileEditor() {
     <section className={styles.editor} aria-label="Profile editor">
       <div className={styles.heading}>
         <h2>Profile</h2>
-        <span>Drag the Bezier handles</span>
+        <span>{grid.label}</span>
       </div>
       <svg
         ref={svgRef}
@@ -63,11 +84,30 @@ export function ProfileEditor() {
         onPointerLeave={stopDragging}
       >
         <defs>
-          <pattern id="profile-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#d8dee6" strokeWidth="0.6" />
+          <pattern
+            id="profile-grid"
+            width={grid.spacing}
+            height={grid.spacing}
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d={`M ${grid.spacing} 0 L 0 0 0 ${grid.spacing}`}
+              fill="none"
+              stroke="#d8dee6"
+              strokeWidth="0.6"
+            />
           </pattern>
         </defs>
-        <rect x="-24" y="-24" width="230" height="290" fill="url(#profile-grid)" />
+        <rect
+          x="-24"
+          y="-24"
+          width="230"
+          height="290"
+          data-grid-unit={grid.unit}
+          data-grid-size={grid.spacing.toFixed(3)}
+          data-testid="profile-grid"
+          fill="url(#profile-grid)"
+        />
         <line className={styles.axis} x1="0" x2="0" y1="-18" y2="248" />
         <path
           className={styles.controlLine}

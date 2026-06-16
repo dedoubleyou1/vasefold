@@ -24,7 +24,7 @@ test("updates template when the section count changes", async ({ page }) => {
 
 test("updates template when the revolve angle changes", async ({ page }) => {
   await page.goto("/");
-  const firstPath = page.locator("[data-testid='template-preview'] path").first();
+  const firstPath = page.locator("[data-testid='template-preview'] > path").first();
   const before = await firstPath.getAttribute("d");
 
   await page.getByTestId("revolve-degrees").fill("180");
@@ -38,8 +38,13 @@ test("switches units and uses height as the only object dimension", async ({ pag
 
   await expect(page.getByLabel("Vase height in mm")).toHaveValue("160");
   await expect(page.getByText(/Max diameter derives from the profile:/)).toBeVisible();
+  await expect(page.getByText("Grid: 1 cm")).toBeVisible();
+  await expect(page.getByTestId("profile-grid")).toHaveAttribute("data-grid-unit", "mm");
+  await expect(page.getByTestId("profile-grid")).toHaveAttribute("data-grid-size", "10.000");
+  await expect(page.getByTestId("template-grid")).toHaveAttribute("data-grid-unit", "mm");
+  await expect(page.getByTestId("template-grid")).toHaveAttribute("data-grid-size", "10.000");
   const vasePath = page.locator("[data-testid='vase-preview'] path");
-  const templatePath = page.locator("[data-testid='template-preview'] path").first();
+  const templatePath = page.locator("[data-testid='template-preview'] > path").first();
   const metricBox = await vasePath.boundingBox();
   const metricTemplateBox = await templatePath.boundingBox();
   expect(metricBox).not.toBeNull();
@@ -51,6 +56,11 @@ test("switches units and uses height as the only object dimension", async ({ pag
 
   await page.getByRole("button", { name: "Imperial" }).click();
   await expect(page.getByLabel("Vase height in in")).toHaveValue("6.299");
+  await expect(page.getByText("Grid: 1/2 in")).toBeVisible();
+  await expect(page.getByTestId("profile-grid")).toHaveAttribute("data-grid-unit", "in");
+  await expect(page.getByTestId("profile-grid")).toHaveAttribute("data-grid-size", /^12\.70[0-9]$/);
+  await expect(page.getByTestId("template-grid")).toHaveAttribute("data-grid-unit", "in");
+  await expect(page.getByTestId("template-grid")).toHaveAttribute("data-grid-size", "0.500");
   const imperialBox = await vasePath.boundingBox();
   const imperialTemplateBox = await templatePath.boundingBox();
   expect(imperialBox).not.toBeNull();
@@ -66,7 +76,7 @@ test("switches units and uses height as the only object dimension", async ({ pag
 
 test("dragging a profile handle updates the template path", async ({ page }) => {
   await page.goto("/");
-  const firstPath = page.locator("[data-testid='template-preview'] path").first();
+  const firstPath = page.locator("[data-testid='template-preview'] > path").first();
   const before = await firstPath.getAttribute("d");
   const handle = page.getByTestId("handle-p3");
   const box = await handle.boundingBox();
