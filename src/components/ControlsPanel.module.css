@@ -95,6 +95,29 @@
   line-height: 1.35;
 }
 
+.exportButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: 7px;
+  background: var(--accent);
+  color: white;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.exportButton:hover {
+  background: var(--accent-strong);
+}
+
+.exportButton:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
 @media (max-width: 980px) {
   .panel {
     border-right: 0;

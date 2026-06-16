@@ -5,33 +5,93 @@
   background: var(--background);
 }
 
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 3.5rem;
+  border-bottom: 1px solid var(--line);
+  padding: 0.55rem 1rem 0;
+  background: var(--surface);
+}
+
+.appName {
+  margin-right: 0.9rem;
+  padding-bottom: 0.55rem;
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 820;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.tab,
+.tabActive {
+  min-width: 7rem;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  padding: 0.65rem 1rem;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.tab:hover {
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+.tabActive {
+  border-color: var(--line);
+  background: var(--background);
+  color: var(--ink);
+}
+
+.tab:focus-visible,
+.tabActive:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -1px;
+}
+
 .workspace {
   display: grid;
   min-height: 0;
   grid-template-columns: minmax(15rem, 17rem) 1fr;
 }
 
-.editorGrid {
+.editGrid {
   display: grid;
   min-width: 0;
   min-height: 0;
   grid-template-columns: minmax(22rem, 0.9fr) minmax(24rem, 1.1fr);
 }
 
-.previewStack {
+.templateGrid {
   display: grid;
   min-width: 0;
   min-height: 0;
-  grid-template-rows: minmax(14rem, 0.8fr) minmax(18rem, 1.2fr);
 }
 
 @media (max-width: 980px) {
   .workspace,
-  .editorGrid {
+  .editGrid {
     grid-template-columns: 1fr;
   }
+}
 
-  .previewStack {
-    grid-template-rows: auto auto;
+@media (max-width: 560px) {
+  .tabs {
+    align-items: stretch;
+    flex-wrap: wrap;
+    padding-top: 0.65rem;
+  }
+
+  .appName {
+    width: 100%;
+    padding-bottom: 0.1rem;
   }
 }

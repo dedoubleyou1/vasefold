@@ -13,13 +13,11 @@ export function ControlsPanel() {
   const setSectionCount = useProjectStore((state) => state.setSectionCount);
   const setRevolveDegrees = useProjectStore((state) => state.setRevolveDegrees);
   const setPanelApproximation = useProjectStore((state) => state.setPanelApproximation);
-  const setExportScale = useProjectStore((state) => state.setExportScale);
-  const setStrokeWidth = useProjectStore((state) => state.setStrokeWidth);
   const setUnitSystem = useProjectStore((state) => state.setUnitSystem);
   const setObjectHeight = useProjectStore((state) => state.setObjectHeight);
 
   return (
-    <aside className={styles.panel} aria-label="Template settings">
+    <aside className={styles.panel} aria-label="Edit settings">
       <section className={styles.group}>
         <label htmlFor="preset">Preset</label>
         <select
@@ -130,41 +128,6 @@ export function ControlsPanel() {
           <option value="circumference">Match arc length</option>
           <option value="circumscribed">Circumscribed</option>
         </select>
-      </section>
-
-      <section className={styles.group}>
-        <div className={styles.labelRow}>
-          <label htmlFor="scale">Export margin</label>
-          <span>{project.exportScale.toFixed(2)}x</span>
-        </div>
-        <input
-          id="scale"
-          max={4}
-          min={0.25}
-          step={0.25}
-          type="range"
-          value={project.exportScale}
-          onChange={(event) => setExportScale(Number(event.target.value))}
-        />
-        <p className={styles.helpText}>
-          SVG size is calculated from the flattened template bounds.
-        </p>
-      </section>
-
-      <section className={styles.group}>
-        <div className={styles.labelRow}>
-          <label htmlFor="stroke">Stroke</label>
-          <span>{project.stroke.width.toFixed(1)}</span>
-        </div>
-        <input
-          id="stroke"
-          max={5}
-          min={0.2}
-          step={0.1}
-          type="range"
-          value={project.stroke.width}
-          onChange={(event) => setStrokeWidth(Number(event.target.value))}
-        />
       </section>
     </aside>
   );
