@@ -1,6 +1,12 @@
 import { create } from "zustand";
 import { defaultPreset, presets } from "../presets/presets";
-import type { Point, ProfileControlPoints, ProjectSettings, UnitSystem } from "../types";
+import type {
+  PanelApproximation,
+  Point,
+  ProfileControlPoints,
+  ProjectSettings,
+  UnitSystem,
+} from "../types";
 import { convertDimensions, getUnitDefinition } from "../units";
 
 type ControlPointKey = keyof ProfileControlPoints;
@@ -9,8 +15,8 @@ type ProjectStore = {
   project: ProjectSettings;
   setControlPoint: (key: ControlPointKey, point: Point) => void;
   setSectionCount: (sectionCount: number) => void;
-  setSampleCount: (sampleCount: number) => void;
   setRevolveDegrees: (revolveDegrees: number) => void;
+  setPanelApproximation: (panelApproximation: PanelApproximation) => void;
   setExportScale: (exportScale: number) => void;
   setStrokeWidth: (width: number) => void;
   setUnitSystem: (unitSystem: UnitSystem) => void;
@@ -25,8 +31,9 @@ function createDefaultProject(): ProjectSettings {
   return {
     profile: structuredClone(defaultPreset.profile),
     sectionCount: 7,
-    sampleCount: 48,
+    sampleCount: 96,
     revolveDegrees: 360,
+    panelApproximation: "circumference",
     exportScale: 1,
     unitSystem: unitDefinition.id,
     objectDimensions: unitDefinition.defaultDimensions,
@@ -52,8 +59,11 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         profile: {
           ...state.project.profile,
           [key]: {
-            x: key === "p1" ? 0 : clamp(point.x, 0, 180),
-            y: key === "p4" ? state.project.profile.p4.y : clamp(point.y, -20, 240),
+            x: clamp(point.x, 0, 180),
+            y:
+              key === "p1" || key === "p4"
+                ? state.project.profile[key].y
+                : clamp(point.y, -20, 240),
           },
         },
       },
@@ -65,18 +75,18 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         sectionCount: clamp(Math.round(sectionCount), 3, 24),
       },
     })),
-  setSampleCount: (sampleCount) =>
-    set((state) => ({
-      project: {
-        ...state.project,
-        sampleCount: clamp(Math.round(sampleCount), 8, 160),
-      },
-    })),
   setRevolveDegrees: (revolveDegrees) =>
     set((state) => ({
       project: {
         ...state.project,
         revolveDegrees: clamp(Math.round(revolveDegrees), 1, 360),
+      },
+    })),
+  setPanelApproximation: (panelApproximation) =>
+    set((state) => ({
+      project: {
+        ...state.project,
+        panelApproximation,
       },
     })),
   setExportScale: (exportScale) =>

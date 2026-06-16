@@ -1,4 +1,5 @@
-import type { Bounds, Panel, Point, ProfileSample } from "../types";
+import type { Bounds, Panel, PanelApproximation, Point, ProfileSample } from "../types";
+import { getPanelEdgeLength, getSweepRadians } from "./panelApproximation";
 
 const EPSILON = 0.000001;
 
@@ -6,30 +7,47 @@ export function buildFlattenedPanels(
   samples: ProfileSample[],
   sectionCount: number,
   revolveDegrees = 360,
+  approximation: PanelApproximation = "circumference",
 ): Panel[] {
   const count = Math.max(1, Math.round(sectionCount));
-  const revolveFraction = Math.min(360, Math.max(1, revolveDegrees)) / 360;
-  const sweepRadians = Math.PI * 2 * revolveFraction;
+  const sweepRadians = getSweepRadians(revolveDegrees);
+  const layoutAngleStep = count > 1 ? (Math.PI * 2) / count : 0;
+  const layoutOffset = getLayoutOffset(
+    samples,
+    count,
+    sweepRadians,
+    layoutAngleStep,
+    approximation,
+  );
   const panels: Panel[] = [];
 
   for (let sectionIndex = 0; sectionIndex < count; sectionIndex += 1) {
-    const centerAngle = (sectionIndex / count) * sweepRadians;
+    const centerAngle = sectionIndex * layoutAngleStep;
+    const centerDirection = {
+      x: Math.cos(centerAngle),
+      y: Math.sin(centerAngle),
+    };
+    const lateralDirection = {
+      x: -Math.sin(centerAngle),
+      y: Math.cos(centerAngle),
+    };
     const leftPoints: Point[] = [];
     const rightPoints: Point[] = [];
 
     for (const sample of samples) {
-      const panelArcLength = (Math.PI * 2 * sample.point.x * revolveFraction) / count;
-      const angleWidth = sample.length > EPSILON ? panelArcLength / sample.length : 0;
-      const leftAngle = centerAngle - angleWidth / 2;
-      const rightAngle = centerAngle + angleWidth / 2;
+      const panelWidth = getPanelEdgeLength(sample.point.x, sweepRadians, count, approximation);
+      const centerPoint = {
+        x: centerDirection.x * (sample.length + layoutOffset),
+        y: centerDirection.y * (sample.length + layoutOffset),
+      };
 
       leftPoints.push({
-        x: Math.cos(leftAngle) * sample.length,
-        y: Math.sin(leftAngle) * sample.length,
+        x: centerPoint.x - (lateralDirection.x * panelWidth) / 2,
+        y: centerPoint.y - (lateralDirection.y * panelWidth) / 2,
       });
       rightPoints.push({
-        x: Math.cos(rightAngle) * sample.length,
-        y: Math.sin(rightAngle) * sample.length,
+        x: centerPoint.x + (lateralDirection.x * panelWidth) / 2,
+        y: centerPoint.y + (lateralDirection.y * panelWidth) / 2,
       });
     }
 
@@ -40,6 +58,34 @@ export function buildFlattenedPanels(
   }
 
   return panels;
+}
+
+function getLayoutOffset(
+  samples: ProfileSample[],
+  sectionCount: number,
+  sweepRadians: number,
+  layoutAngleStep: number,
+  approximation: PanelApproximation,
+): number {
+  if (sectionCount <= 1 || layoutAngleStep <= EPSILON) {
+    return 0;
+  }
+
+  const halfStepTangent = Math.tan(layoutAngleStep / 2);
+  if (halfStepTangent <= EPSILON) {
+    return 0;
+  }
+
+  return samples.reduce((offset, sample) => {
+    const panelWidth = getPanelEdgeLength(
+      sample.point.x,
+      sweepRadians,
+      sectionCount,
+      approximation,
+    );
+    const requiredCenterRadius = panelWidth / (2 * halfStepTangent);
+    return Math.max(offset, requiredCenterRadius - sample.length);
+  }, 0);
 }
 
 export function getBounds(points: Point[]): Bounds {

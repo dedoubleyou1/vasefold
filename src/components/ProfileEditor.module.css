@@ -58,12 +58,6 @@
   stroke-width: 3;
 }
 
-.anchor {
-  fill: var(--surface);
-  stroke: var(--ink);
-  stroke-width: 2;
-}
-
 .handle {
   fill: var(--highlight);
   stroke: var(--ink);

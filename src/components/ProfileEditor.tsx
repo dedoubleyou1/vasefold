@@ -5,9 +5,10 @@ import type { Point, ProfileControlPoints } from "../types";
 import { getUnitDefinition } from "../units";
 import styles from "./ProfileEditor.module.css";
 
-type EditablePoint = Exclude<keyof ProfileControlPoints, "p1">;
+type EditablePoint = keyof ProfileControlPoints;
 
-const editablePoints: EditablePoint[] = ["p2", "p3", "p4"];
+const editablePoints: EditablePoint[] = ["p1", "p2", "p3", "p4"];
+const horizontalOnlyPoints = new Set<EditablePoint>(["p1", "p4"]);
 
 function curvePath(profile: ProfileControlPoints): string {
   return `M ${profile.p1.x} ${profile.p1.y} C ${profile.p2.x} ${profile.p2.y}, ${profile.p3.x} ${profile.p3.y}, ${profile.p4.x} ${profile.p4.y}`;
@@ -119,11 +120,14 @@ export function ProfileEditor() {
         />
         <path className={styles.curveShadow} d={curvePath(profile)} />
         <path className={styles.curve} d={sampledPath} />
-        <circle className={styles.anchor} cx={profile.p1.x} cy={profile.p1.y} r="5" />
         {editablePoints.map((key) => (
           <circle
             key={key}
-            className={key === "p4" ? `${styles.handle} ${styles.horizontalHandle}` : styles.handle}
+            className={
+              horizontalOnlyPoints.has(key)
+                ? `${styles.handle} ${styles.horizontalHandle}`
+                : styles.handle
+            }
             cx={profile[key].x}
             cy={profile[key].y}
             data-testid={`handle-${key}`}

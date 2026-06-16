@@ -17,6 +17,8 @@ export type PageSize = {
 
 export type UnitSystem = "metric" | "imperial";
 
+export type PanelApproximation = "inscribed" | "circumference" | "circumscribed";
+
 export type ObjectDimensions = {
   height: number;
 };
@@ -32,6 +34,7 @@ export type ProjectSettings = {
   sectionCount: number;
   sampleCount: number;
   revolveDegrees: number;
+  panelApproximation: PanelApproximation;
   exportScale: number;
   unitSystem: UnitSystem;
   objectDimensions: ObjectDimensions;

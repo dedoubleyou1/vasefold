@@ -1,6 +1,7 @@
 import { deriveMaxDiameter } from "../geometry/bezier";
 import { presets } from "../presets/presets";
 import { useProjectStore } from "../state/projectStore";
+import type { PanelApproximation } from "../types";
 import { formatUnitValue, getUnitDefinition } from "../units";
 import styles from "./ControlsPanel.module.css";
 
@@ -10,8 +11,8 @@ export function ControlsPanel() {
   const derivedDiameter = deriveMaxDiameter(project.profile, project.objectDimensions);
   const applyPreset = useProjectStore((state) => state.applyPreset);
   const setSectionCount = useProjectStore((state) => state.setSectionCount);
-  const setSampleCount = useProjectStore((state) => state.setSampleCount);
   const setRevolveDegrees = useProjectStore((state) => state.setRevolveDegrees);
+  const setPanelApproximation = useProjectStore((state) => state.setPanelApproximation);
   const setExportScale = useProjectStore((state) => state.setExportScale);
   const setStrokeWidth = useProjectStore((state) => state.setStrokeWidth);
   const setUnitSystem = useProjectStore((state) => state.setUnitSystem);
@@ -117,18 +118,18 @@ export function ControlsPanel() {
       </section>
 
       <section className={styles.group}>
-        <div className={styles.labelRow}>
-          <label htmlFor="samples">Samples</label>
-          <span>{project.sampleCount}</span>
-        </div>
-        <input
-          id="samples"
-          max={160}
-          min={8}
-          type="range"
-          value={project.sampleCount}
-          onChange={(event) => setSampleCount(Number(event.target.value))}
-        />
+        <label htmlFor="panel-approximation">Panel approximation</label>
+        <select
+          aria-label="Panel approximation"
+          data-testid="panel-approximation"
+          id="panel-approximation"
+          value={project.panelApproximation}
+          onChange={(event) => setPanelApproximation(event.target.value as PanelApproximation)}
+        >
+          <option value="inscribed">Inscribed</option>
+          <option value="circumference">Match arc length</option>
+          <option value="circumscribed">Circumscribed</option>
+        </select>
       </section>
 
       <section className={styles.group}>

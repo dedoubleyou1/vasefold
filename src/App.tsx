@@ -1,10 +1,10 @@
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useMemo } from "react";
+import { ConstructionPreview3D } from "./components/ConstructionPreview3D";
 import { ControlsPanel } from "./components/ControlsPanel";
 import { ExportToolbar } from "./components/ExportToolbar";
 import { ProfileEditor } from "./components/ProfileEditor";
 import { TemplatePreview } from "./components/TemplatePreview";
-import { VasePreview } from "./components/VasePreview";
 import { sampleBezierProfile, scaleProfileToDimensions } from "./geometry/bezier";
 import { buildFlattenedPanels } from "./geometry/panels";
 import { useProjectStore } from "./state/projectStore";
@@ -21,8 +21,14 @@ export default function App() {
     [scaledProfile, project.sampleCount],
   );
   const panels = useMemo(
-    () => buildFlattenedPanels(samples, project.sectionCount, project.revolveDegrees),
-    [samples, project.revolveDegrees, project.sectionCount],
+    () =>
+      buildFlattenedPanels(
+        samples,
+        project.sectionCount,
+        project.revolveDegrees,
+        project.panelApproximation,
+      ),
+    [project.panelApproximation, project.revolveDegrees, project.sectionCount, samples],
   );
 
   return (
@@ -34,7 +40,12 @@ export default function App() {
           <div className={styles.editorGrid}>
             <ProfileEditor />
             <div className={styles.previewStack}>
-              <VasePreview samples={samples} />
+              <ConstructionPreview3D
+                revolveDegrees={project.revolveDegrees}
+                panelApproximation={project.panelApproximation}
+                samples={samples}
+                sectionCount={project.sectionCount}
+              />
               <TemplatePreview panels={panels} settings={project} />
             </div>
           </div>
