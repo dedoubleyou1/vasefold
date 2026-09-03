@@ -2,6 +2,8 @@
 
 A browser-based papercraft template tool for turning vase-like revolved profiles into flattened SVG templates.
 
+[Open VaseFold](https://dedoubleyou1.github.io/vasefold/)
+
 The app samples a cubic Bezier side profile, imagines it revolved around a vertical axis, and maps the resulting surface into repeated 2D panels that can be exported as a printable SVG.
 
 ## Run
