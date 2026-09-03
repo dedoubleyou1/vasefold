@@ -11,7 +11,7 @@ export type UnitDefinition = {
   maxDimension: number;
   step: number;
   decimals: number;
-  exportMargin: number;
+  exportPadding: number;
 };
 
 export const unitDefinitions: Record<UnitSystem, UnitDefinition> = {
@@ -26,7 +26,7 @@ export const unitDefinitions: Record<UnitSystem, UnitDefinition> = {
     maxDimension: 10000,
     step: 1,
     decimals: 0,
-    exportMargin: 6,
+    exportPadding: 6,
   },
   imperial: {
     id: "imperial",
@@ -39,7 +39,7 @@ export const unitDefinitions: Record<UnitSystem, UnitDefinition> = {
     maxDimension: 400,
     step: 0.125,
     decimals: 3,
-    exportMargin: 0.25,
+    exportPadding: 0.25,
   },
 };
 

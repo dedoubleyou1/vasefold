@@ -32,6 +32,12 @@
   min-height: 17rem;
 }
 
+.exportBounds {
+  stroke: var(--highlight);
+  stroke-dasharray: 8 4;
+  stroke-linejoin: round;
+}
+
 .panelPath {
   stroke-linejoin: round;
 }

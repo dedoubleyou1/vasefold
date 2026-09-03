@@ -57,6 +57,48 @@
   outline-offset: -1px;
 }
 
+.unitToggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem;
+  min-height: 2.35rem;
+  margin-left: auto;
+  margin-bottom: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 0.2rem;
+  background: var(--background);
+}
+
+.unitButton,
+.unitActive {
+  min-width: 5.5rem;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 720;
+  cursor: pointer;
+}
+
+.unitButton:hover {
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+.unitActive {
+  background: var(--accent);
+  color: white;
+}
+
+.unitButton:focus-visible,
+.unitActive:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
 .workspace {
   display: grid;
   min-height: 0;
@@ -91,7 +133,12 @@
   }
 
   .appName {
-    width: 100%;
+    width: auto;
     padding-bottom: 0.1rem;
+  }
+
+  .unitToggle {
+    width: 100%;
+    margin-bottom: 0.65rem;
   }
 }

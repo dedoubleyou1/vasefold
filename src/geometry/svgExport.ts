@@ -1,4 +1,5 @@
 import type { Panel, ProjectSettings } from "../types";
+import { formatStrokeWidth } from "../strokeUnits";
 import { getUnitDefinition } from "../units";
 import { getPanelBounds, panelToPath } from "./panels";
 
@@ -15,14 +16,14 @@ function escapeAttribute(value: string): string {
 export function buildSvgDocument(panels: Panel[], settings: ProjectSettings): string {
   const unitDefinition = getUnitDefinition(settings.unitSystem);
   const bounds = getPanelBounds(panels);
-  const margin = unitDefinition.exportMargin / settings.exportScale;
-  const exportWidth = Number((bounds.width + margin * 2).toFixed(unitDefinition.decimals));
-  const exportHeight = Number((bounds.height + margin * 2).toFixed(unitDefinition.decimals));
+  const padding = settings.exportPadding;
+  const exportWidth = Number((bounds.width + padding * 2).toFixed(unitDefinition.decimals));
+  const exportHeight = Number((bounds.height + padding * 2).toFixed(unitDefinition.decimals));
   const viewBox = [
-    bounds.minX - margin,
-    bounds.minY - margin,
-    bounds.width + margin * 2,
-    bounds.height + margin * 2,
+    bounds.minX - padding,
+    bounds.minY - padding,
+    bounds.width + padding * 2,
+    bounds.height + padding * 2,
   ]
     .map((value) => Number(value.toFixed(3)))
     .join(" ");
@@ -35,7 +36,7 @@ export function buildSvgDocument(panels: Panel[], settings: ProjectSettings): st
       (panel) =>
         `  <path id="${panel.id}" d="${panelToPath(panel)}" fill="none" stroke="${escapeAttribute(
           settings.stroke.color,
-        )}" stroke-width="${settings.stroke.width}"${dashArray} vector-effect="non-scaling-stroke" />`,
+        )}" stroke-width="${formatStrokeWidth(settings.stroke)}"${dashArray} vector-effect="non-scaling-stroke" />`,
     )
     .join("\n");
 

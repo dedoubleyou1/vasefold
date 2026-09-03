@@ -1,13 +1,15 @@
 import { create } from "zustand";
 import { defaultPreset, presets } from "../presets/presets";
+import { clampStrokeWidth, convertStrokeWidth, getStrokeUnitForSystem } from "../strokeUnits";
 import type {
   PanelApproximation,
   Point,
   ProfileControlPoints,
   ProjectSettings,
+  TemplateLayout,
   UnitSystem,
 } from "../types";
-import { convertDimensions, getUnitDefinition } from "../units";
+import { convertDimensions, convertUnitValue, getUnitDefinition } from "../units";
 
 type ControlPointKey = keyof ProfileControlPoints;
 
@@ -17,7 +19,9 @@ type ProjectStore = {
   setSectionCount: (sectionCount: number) => void;
   setRevolveDegrees: (revolveDegrees: number) => void;
   setPanelApproximation: (panelApproximation: PanelApproximation) => void;
-  setExportScale: (exportScale: number) => void;
+  setTemplateLayout: (templateLayout: TemplateLayout) => void;
+  setAlternatingStripOffset: (alternatingStripOffset: number) => void;
+  setExportPadding: (exportPadding: number) => void;
   setStrokeWidth: (width: number) => void;
   setUnitSystem: (unitSystem: UnitSystem) => void;
   setObjectHeight: (height: number) => void;
@@ -27,6 +31,7 @@ type ProjectStore = {
 
 function createDefaultProject(): ProjectSettings {
   const unitDefinition = getUnitDefinition("metric");
+  const strokeUnit = getStrokeUnitForSystem(unitDefinition.id);
 
   return {
     profile: structuredClone(defaultPreset.profile),
@@ -34,11 +39,14 @@ function createDefaultProject(): ProjectSettings {
     sampleCount: 96,
     revolveDegrees: 360,
     panelApproximation: "circumference",
-    exportScale: 1,
+    templateLayout: "radialFan",
+    alternatingStripOffset: 0,
+    exportPadding: unitDefinition.exportPadding,
     unitSystem: unitDefinition.id,
     objectDimensions: unitDefinition.defaultDimensions,
     stroke: {
-      width: 1,
+      width: convertStrokeWidth(0.5, "pt", strokeUnit),
+      unit: strokeUnit,
       color: "#1f2937",
       dashArray: "4 2",
     },
@@ -89,11 +97,25 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         panelApproximation,
       },
     })),
-  setExportScale: (exportScale) =>
+  setTemplateLayout: (templateLayout) =>
     set((state) => ({
       project: {
         ...state.project,
-        exportScale: clamp(exportScale, 0.25, 4),
+        templateLayout,
+      },
+    })),
+  setAlternatingStripOffset: (alternatingStripOffset) =>
+    set((state) => ({
+      project: {
+        ...state.project,
+        alternatingStripOffset: clamp(Math.round(alternatingStripOffset), -100, 100),
+      },
+    })),
+  setExportPadding: (exportPadding) =>
+    set((state) => ({
+      project: {
+        ...state.project,
+        exportPadding: clampPadding(exportPadding, state.project.unitSystem),
       },
     })),
   setStrokeWidth: (width) =>
@@ -102,16 +124,23 @@ export const useProjectStore = create<ProjectStore>((set) => ({
         ...state.project,
         stroke: {
           ...state.project.stroke,
-          width: clamp(width, 0.2, 5),
+          width: clampStrokeWidth(width, state.project.stroke.unit),
         },
       },
     })),
   setUnitSystem: (unitSystem) =>
     set((state) => {
+      const strokeUnit = getStrokeUnitForSystem(unitSystem);
       const convertedDimensions = convertDimensions(
         state.project.objectDimensions,
         state.project.unitSystem,
         unitSystem,
+      );
+      const unitDefinition = getUnitDefinition(unitSystem);
+      const convertedExportPadding = Number(
+        convertUnitValue(state.project.exportPadding, state.project.unitSystem, unitSystem).toFixed(
+          unitDefinition.decimals,
+        ),
       );
 
       return {
@@ -119,6 +148,15 @@ export const useProjectStore = create<ProjectStore>((set) => ({
           ...state.project,
           unitSystem,
           objectDimensions: convertedDimensions,
+          exportPadding: clampPadding(convertedExportPadding, unitSystem),
+          stroke: {
+            ...state.project.stroke,
+            unit: strokeUnit,
+            width: clampStrokeWidth(
+              convertStrokeWidth(state.project.stroke.width, state.project.stroke.unit, strokeUnit),
+              strokeUnit,
+            ),
+          },
         },
       };
     }),
@@ -148,4 +186,9 @@ export const useProjectStore = create<ProjectStore>((set) => ({
 function clampDimension(value: number, unitSystem: UnitSystem): number {
   const definition = getUnitDefinition(unitSystem);
   return clamp(value, definition.minDimension, definition.maxDimension);
+}
+
+function clampPadding(value: number, unitSystem: UnitSystem): number {
+  const definition = getUnitDefinition(unitSystem);
+  return clamp(value, 0, definition.exportPadding * 40);
 }

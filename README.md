@@ -1,4 +1,4 @@
-# Flatten Revolved Curve
+# VaseFold
 
 A browser-based papercraft template tool for turning vase-like revolved profiles into flattened SVG templates.
 

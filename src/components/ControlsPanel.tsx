@@ -13,7 +13,6 @@ export function ControlsPanel() {
   const setSectionCount = useProjectStore((state) => state.setSectionCount);
   const setRevolveDegrees = useProjectStore((state) => state.setRevolveDegrees);
   const setPanelApproximation = useProjectStore((state) => state.setPanelApproximation);
-  const setUnitSystem = useProjectStore((state) => state.setUnitSystem);
   const setObjectHeight = useProjectStore((state) => state.setObjectHeight);
 
   return (
@@ -31,33 +30,6 @@ export function ControlsPanel() {
             </option>
           ))}
         </select>
-      </section>
-
-      <section className={styles.group}>
-        <span className={styles.fieldLabel}>Units</span>
-        <div
-          aria-label="Units"
-          className={styles.segmentedControl}
-          data-testid="unit-system"
-          role="group"
-        >
-          <button
-            aria-pressed={project.unitSystem === "metric"}
-            className={project.unitSystem === "metric" ? styles.segmentActive : styles.segment}
-            type="button"
-            onClick={() => setUnitSystem("metric")}
-          >
-            Metric
-          </button>
-          <button
-            aria-pressed={project.unitSystem === "imperial"}
-            className={project.unitSystem === "imperial" ? styles.segmentActive : styles.segment}
-            type="button"
-            onClick={() => setUnitSystem("imperial")}
-          >
-            Imperial
-          </button>
-        </div>
       </section>
 
       <section className={styles.group}>

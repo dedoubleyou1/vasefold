@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { sampleBezierProfile } from "./bezier";
 import { buildAssembledPanelMesh, buildConstructionMesh } from "./mesh";
-import { buildFlattenedPanels, panelToPath } from "./panels";
+import { buildFlattenedPanels, getPanelBounds, panelToPath } from "./panels";
 import { buildSvgDocument } from "./svgExport";
+import { layoutTemplatePanels } from "./templateLayout";
 import { defaultPreset } from "../presets/presets";
 import type { ProjectSettings } from "../types";
 
@@ -12,10 +13,12 @@ const baseProject: ProjectSettings = {
   sampleCount: 96,
   revolveDegrees: 360,
   panelApproximation: "circumference",
-  exportScale: 1,
+  templateLayout: "radialFan",
+  alternatingStripOffset: 0,
+  exportPadding: 6,
   unitSystem: "metric",
   objectDimensions: { height: 160 },
-  stroke: { width: 1, color: "#111827", dashArray: "4 2" },
+  stroke: { width: 0.176, unit: "mm", color: "#111827", dashArray: "4 2" },
   selectedPreset: defaultPreset.id,
 };
 
@@ -127,6 +130,58 @@ describe("Panel generation", () => {
   });
 });
 
+describe("Template layout", () => {
+  it("keeps every panel in the radial fan layout", () => {
+    const samples = sampleBezierProfile(defaultPreset.profile, 48);
+    const panels = buildFlattenedPanels(samples, 7);
+    const laidOutPanels = layoutTemplatePanels(panels, "radialFan");
+
+    expect(laidOutPanels).toBe(panels);
+    expect(laidOutPanels).toHaveLength(7);
+  });
+
+  it("lays panels out in an alternating strip", () => {
+    const samples = sampleBezierProfile(defaultPreset.profile, 48);
+    const panels = buildFlattenedPanels(samples, 5);
+    const laidOutPanels = layoutTemplatePanels(panels, "alternatingStrip");
+    const firstSecondGap = getMinimumHorizontalGap(laidOutPanels[0], laidOutPanels[1]);
+
+    expect(laidOutPanels).toHaveLength(5);
+    expect(firstSecondGap).toBeGreaterThanOrEqual(-0.001);
+    expect(firstSecondGap).toBeCloseTo(0, 5);
+    expect(getSampleLeftPoint(laidOutPanels[0], 0).y).toBeLessThan(
+      getSampleLeftPoint(laidOutPanels[0], samples.length - 1).y,
+    );
+    expect(getSampleLeftPoint(laidOutPanels[1], 0).y).toBeGreaterThan(
+      getSampleLeftPoint(laidOutPanels[1], samples.length - 1).y,
+    );
+  });
+
+  it("applies alternating strip offset before packing", () => {
+    const samples = sampleBezierProfile(defaultPreset.profile, 48);
+    const panels = buildFlattenedPanels(samples, 5);
+    const defaultLayout = layoutTemplatePanels(panels, "alternatingStrip", 0);
+    const offsetLayout = layoutTemplatePanels(panels, "alternatingStrip", 35);
+    const defaultSecondBounds = getBoundsForPanel(defaultLayout[1]);
+    const offsetSecondBounds = getBoundsForPanel(offsetLayout[1]);
+    const offsetGap = getMinimumHorizontalGap(offsetLayout[0], offsetLayout[1]);
+
+    expect(offsetSecondBounds.minY).toBeGreaterThan(defaultSecondBounds.minY);
+    expect(offsetGap).toBeGreaterThanOrEqual(-0.001);
+  });
+
+  it("can show a single canonical panel", () => {
+    const samples = sampleBezierProfile(defaultPreset.profile, 48);
+    const panels = buildFlattenedPanels(samples, 7);
+    const laidOutPanels = layoutTemplatePanels(panels, "singlePanel");
+    const bounds = getBoundsForPanel(laidOutPanels[0]);
+
+    expect(laidOutPanels).toHaveLength(1);
+    expect(bounds.minX).toBeCloseTo(0, 5);
+    expect(bounds.minY).toBeCloseTo(0, 5);
+  });
+});
+
 function getOuterCenterAngle(
   panel: { points: { x: number; y: number }[] },
   sampleCount: number,
@@ -164,6 +219,77 @@ function getSampleWidth(
   return Math.hypot(rightPoint.x - leftPoint.x, rightPoint.y - leftPoint.y);
 }
 
+function getBoundsForPanel(panel: { points: { x: number; y: number }[] }) {
+  return {
+    minX: Math.min(...panel.points.map((point) => point.x)),
+    minY: Math.min(...panel.points.map((point) => point.y)),
+    maxX: Math.max(...panel.points.map((point) => point.x)),
+    maxY: Math.max(...panel.points.map((point) => point.y)),
+  };
+}
+
+function getMinimumHorizontalGap(
+  firstPanel: { points: { x: number; y: number }[] },
+  secondPanel: { points: { x: number; y: number }[] },
+): number {
+  const firstBounds = getBoundsForPanel(firstPanel);
+  const secondBounds = getBoundsForPanel(secondPanel);
+  const minY = Math.max(firstBounds.minY, secondBounds.minY);
+  const maxY = Math.min(firstBounds.maxY, secondBounds.maxY);
+  const ySamples = [
+    minY,
+    maxY,
+    ...firstPanel.points.map((point) => point.y),
+    ...secondPanel.points.map((point) => point.y),
+  ].filter((y) => y >= minY && y <= maxY);
+
+  return ySamples.reduce((gap, y) => {
+    const firstSpan = getHorizontalSpan(firstPanel.points, y);
+    const secondSpan = getHorizontalSpan(secondPanel.points, y);
+
+    if (!firstSpan || !secondSpan) {
+      return gap;
+    }
+
+    return Math.min(gap, secondSpan.minX - firstSpan.maxX);
+  }, Number.POSITIVE_INFINITY);
+}
+
+function getHorizontalSpan(
+  points: { x: number; y: number }[],
+  y: number,
+): { minX: number; maxX: number } | null {
+  const intersections: number[] = [];
+
+  for (let index = 0; index < points.length; index += 1) {
+    const start = points[index];
+    const end = points[(index + 1) % points.length];
+
+    if (Math.abs(end.y - start.y) < 0.000001) {
+      if (Math.abs(y - start.y) < 0.000001) {
+        intersections.push(start.x, end.x);
+      }
+      continue;
+    }
+
+    if (y < Math.min(start.y, end.y) || y > Math.max(start.y, end.y)) {
+      continue;
+    }
+
+    const t = (y - start.y) / (end.y - start.y);
+    intersections.push(start.x + (end.x - start.x) * t);
+  }
+
+  if (intersections.length < 2) {
+    return null;
+  }
+
+  return {
+    minX: Math.min(...intersections),
+    maxX: Math.max(...intersections),
+  };
+}
+
 describe("Construction mesh", () => {
   it("builds indexed 3D mesh geometry from profile samples", () => {
     const samples = sampleBezierProfile(defaultPreset.profile, 16);
@@ -199,10 +325,13 @@ describe("SVG export", () => {
     const samples = sampleBezierProfile(baseProject.profile, baseProject.sampleCount);
     const panels = buildFlattenedPanels(samples, baseProject.sectionCount);
     const svg = buildSvgDocument(panels, baseProject);
+    const bounds = getPanelBounds(panels);
+    const expectedWidth = Number((bounds.width + baseProject.exportPadding * 2).toFixed(0));
 
-    expect(svg).toMatch(/width="[0-9.]+mm"/);
+    expect(svg).toContain(`width="${expectedWidth}mm"`);
     expect(svg).toMatch(/height="[0-9.]+mm"/);
     expect(svg).toContain("viewBox=");
+    expect(svg).toContain('stroke-width="0.176mm"');
     expect(svg).toContain('data-panel-count="7"');
     expect(svg.match(/<path id="panel-/g)).toHaveLength(7);
   });

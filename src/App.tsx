@@ -7,7 +7,9 @@ import { TemplateControlsPanel } from "./components/TemplateControlsPanel";
 import { TemplatePreview } from "./components/TemplatePreview";
 import { sampleBezierProfile, scaleProfileToDimensions } from "./geometry/bezier";
 import { buildFlattenedPanels } from "./geometry/panels";
+import { layoutTemplatePanels } from "./geometry/templateLayout";
 import { useProjectStore } from "./state/projectStore";
+import type { UnitSystem } from "./types";
 import styles from "./App.module.css";
 
 type WorkspaceTab = "edit" | "template";
@@ -15,6 +17,7 @@ type WorkspaceTab = "edit" | "template";
 export default function App() {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("edit");
   const project = useProjectStore((state) => state.project);
+  const setUnitSystem = useProjectStore((state) => state.setUnitSystem);
   const scaledProfile = useMemo(
     () => scaleProfileToDimensions(project.profile, project.objectDimensions),
     [project.objectDimensions, project.profile],
@@ -23,7 +26,7 @@ export default function App() {
     () => sampleBezierProfile(scaledProfile, project.sampleCount),
     [scaledProfile, project.sampleCount],
   );
-  const panels = useMemo(
+  const constructionPanels = useMemo(
     () =>
       buildFlattenedPanels(
         samples,
@@ -32,6 +35,15 @@ export default function App() {
         project.panelApproximation,
       ),
     [project.panelApproximation, project.revolveDegrees, project.sectionCount, samples],
+  );
+  const templatePanels = useMemo(
+    () =>
+      layoutTemplatePanels(
+        constructionPanels,
+        project.templateLayout,
+        project.alternatingStripOffset,
+      ),
+    [constructionPanels, project.alternatingStripOffset, project.templateLayout],
   );
 
   return (
@@ -57,6 +69,26 @@ export default function App() {
           >
             Template
           </button>
+          <div
+            aria-label="Units"
+            className={styles.unitToggle}
+            data-testid="unit-system"
+            role="group"
+          >
+            {(["metric", "imperial"] as UnitSystem[]).map((unitSystem) => (
+              <button
+                key={unitSystem}
+                aria-pressed={project.unitSystem === unitSystem}
+                className={
+                  project.unitSystem === unitSystem ? styles.unitActive : styles.unitButton
+                }
+                type="button"
+                onClick={() => setUnitSystem(unitSystem)}
+              >
+                {unitSystem === "metric" ? "Metric" : "Imperial"}
+              </button>
+            ))}
+          </div>
         </nav>
 
         {activeTab === "edit" ? (
@@ -74,9 +106,9 @@ export default function App() {
           </main>
         ) : (
           <main className={styles.workspace}>
-            <TemplateControlsPanel panels={panels} />
+            <TemplateControlsPanel panels={templatePanels} />
             <div className={styles.templateGrid}>
-              <TemplatePreview panels={panels} settings={project} />
+              <TemplatePreview panels={templatePanels} settings={project} />
             </div>
           </main>
         )}

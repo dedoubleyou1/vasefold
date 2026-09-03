@@ -94,6 +94,36 @@ test("updates template when the panel approximation changes", async ({ page }) =
   await expect(firstPath).not.toHaveAttribute("d", before ?? "");
 });
 
+test("updates template when the template setup changes", async ({ page }) => {
+  await page.goto("/");
+  await openTemplateTab(page);
+  const templateSetup = page.getByLabel("Template setup");
+  const preview = page.getByTestId("template-preview");
+  const firstPath = page.locator("[data-testid='template-preview'] > path").first();
+  const secondPath = page.locator("[data-testid='template-preview'] > path").nth(1);
+  const before = await firstPath.getAttribute("d");
+
+  await expect(templateSetup).toHaveValue("radialFan");
+  await expect(preview).toHaveAttribute("data-panel-count", "7");
+  await expect(page.getByTestId("alternating-strip-offset")).toHaveCount(0);
+
+  await templateSetup.selectOption("alternatingStrip");
+  await expect(templateSetup).toHaveValue("alternatingStrip");
+  await expect(preview).toHaveAttribute("data-panel-count", "7");
+  await expect(firstPath).not.toHaveAttribute("d", before ?? "");
+  await expect(page.getByTestId("alternating-strip-offset")).toBeVisible();
+
+  const beforeOffset = await secondPath.getAttribute("d");
+  await page.getByTestId("alternating-strip-offset").fill("35");
+  await expect(page.getByText("35%", { exact: true })).toBeVisible();
+  await expect(secondPath).not.toHaveAttribute("d", beforeOffset ?? "");
+
+  await templateSetup.selectOption("singlePanel");
+  await expect(templateSetup).toHaveValue("singlePanel");
+  await expect(preview).toHaveAttribute("data-panel-count", "1");
+  await expect(page.getByTestId("alternating-strip-offset")).toHaveCount(0);
+});
+
 test("updates template when the revolve angle changes", async ({ page }) => {
   await page.goto("/");
   await openTemplateTab(page);
@@ -119,6 +149,12 @@ test("switches units and uses height as the only object dimension", async ({ pag
   await openTemplateTab(page);
   await expect(page.getByTestId("template-grid")).toHaveAttribute("data-grid-unit", "mm");
   await expect(page.getByTestId("template-grid")).toHaveAttribute("data-grid-size", "10.000");
+  await expect(page.getByLabel("Export padding in mm")).toHaveValue("6");
+  await expect(page.getByLabel("Stroke width in mm")).toHaveValue("0.176");
+  await expect(page.getByLabel("Stroke unit")).toHaveCount(0);
+  await expect(page.getByTestId("export-bounds")).toBeVisible();
+  await expect(page.getByTestId("export-size")).toContainText("Export");
+  await expect(page.getByTestId("export-size")).toContainText("mm");
   const templatePath = page.locator("[data-testid='template-preview'] > path").first();
   const metricTemplateBox = await templatePath.boundingBox();
   expect(metricTemplateBox).not.toBeNull();
@@ -132,6 +168,9 @@ test("switches units and uses height as the only object dimension", async ({ pag
   await openTemplateTab(page);
   await expect(page.getByTestId("template-grid")).toHaveAttribute("data-grid-unit", "in");
   await expect(page.getByTestId("template-grid")).toHaveAttribute("data-grid-size", "0.500");
+  await expect(page.getByLabel("Export padding in in")).toHaveValue("0.236");
+  await expect(page.getByLabel("Stroke width in pt")).toHaveValue("0.5");
+  await expect(page.getByTestId("export-size")).toContainText("in");
   const imperialTemplateBox = await templatePath.boundingBox();
   expect(imperialTemplateBox).not.toBeNull();
   expect(imperialTemplateBox!.height).toBeGreaterThan(metricTemplateBox!.height * 0.98);

@@ -14,7 +14,6 @@
 }
 
 .group label,
-.fieldLabel,
 .labelRow {
   color: var(--ink);
   font-size: 0.82rem;
@@ -46,46 +45,6 @@
 
 .group input[type="range"] {
   accent-color: var(--accent);
-}
-
-.segmentedControl {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.2rem;
-  min-height: 2.35rem;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  padding: 0.2rem;
-  background: var(--surface);
-}
-
-.segment,
-.segmentActive {
-  min-width: 0;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 720;
-  cursor: pointer;
-}
-
-.segment:hover {
-  background: var(--surface-strong);
-  color: var(--ink);
-}
-
-.segmentActive {
-  background: var(--accent);
-  color: white;
-}
-
-.segment:focus-visible,
-.segmentActive:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
 }
 
 .helpText {
